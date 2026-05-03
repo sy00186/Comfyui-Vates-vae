@@ -1,0 +1,8 @@
+/target/
+dct-core/target/
+/.venv/
+.venv/
+
+*.pyd
+*.so
+*.dll

@@ -1,0 +1,15 @@
+//! **v_vae_core**：`FrameBus` 像素总线 + 异步 Rayon DCT（依赖 `vates_core::Encoder`）。
+
+mod frame_bus;
+mod python_binding;
+
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+#[cfg(feature = "python")]
+use pyo3::types::PyModule;
+
+#[cfg(feature = "python")]
+#[pymodule]
+fn v_vae_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    python_binding::register(m)
+}

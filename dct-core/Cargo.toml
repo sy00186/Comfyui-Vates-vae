@@ -1,0 +1,21 @@
+[package]
+name = "v_vae_core"
+version = "0.1.0"
+edition = "2021"
+description = "Vates VAE FrameBus — shared pixel pool + async DCT encoding"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "v_vae_core"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["python"]
+python = ["dep:pyo3"]
+
+[dependencies]
+once_cell = "1.19"
+pyo3 = { version = "0.22", optional = true, features = ["extension-module"] }
+rayon = "1.10"
+vates_core = { path = "../../ComfyUI-Vates-BatchLoader/dct-core", default-features = false }
