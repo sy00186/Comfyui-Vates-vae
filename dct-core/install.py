@@ -108,7 +108,8 @@ def _verify_import() -> bool:
         f"exp={exp!r}; "
         "assert getattr(v,'__version__',None)==exp; "
         "assert callable(v.frame_bus_init_pool); "
-        "assert callable(v.frame_bus_push_frame)"
+        "assert callable(v.frame_bus_push_frame); "
+        "assert callable(getattr(v, 'frame_bus_schedule_export', None))"
     )
     try:
         subprocess.check_call(

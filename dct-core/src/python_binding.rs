@@ -10,6 +10,7 @@ pub(crate) fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(frame_bus_init_pool, m)?)?;
     m.add_function(wrap_pyfunction!(frame_bus_push_frame, m)?)?;
     m.add_function(wrap_pyfunction!(frame_bus_schedule_save_dct_parallel, m)?)?;
+    m.add_function(wrap_pyfunction!(frame_bus_schedule_export, m)?)?;
     m.add_function(wrap_pyfunction!(frame_bus_pushed_count, m)?)?;
     m.add_function(wrap_pyfunction!(get_pending_tasks, m)?)?;
     m.add_function(wrap_pyfunction!(await_pending_writes, m)?)?;
@@ -55,6 +56,47 @@ fn frame_bus_schedule_save_dct_parallel(
         workflow_json,
         zstd_level,
         require_full,
+    )
+    .map_err(str_to_py)
+}
+
+#[allow(clippy::too_many_arguments)]
+#[pyfunction]
+#[pyo3(signature = (
+    paths,
+    format,
+    package_as_zip = false,
+    quality = 92u8,
+    fps = 24.0,
+    header_mode = 0u8,
+    workflow_json = None,
+    zstd_level = 3i32,
+    require_full = true,
+    zip_inner_prefix = ""
+))]
+fn frame_bus_schedule_export(
+    paths: Vec<String>,
+    format: String,
+    package_as_zip: bool,
+    quality: u8,
+    fps: f32,
+    header_mode: u8,
+    workflow_json: Option<String>,
+    zstd_level: i32,
+    require_full: bool,
+    zip_inner_prefix: &str,
+) -> PyResult<()> {
+    frame_bus::schedule_export(
+        paths,
+        format,
+        package_as_zip,
+        quality,
+        fps,
+        header_mode,
+        workflow_json,
+        zstd_level,
+        require_full,
+        zip_inner_prefix.to_string(),
     )
     .map_err(str_to_py)
 }

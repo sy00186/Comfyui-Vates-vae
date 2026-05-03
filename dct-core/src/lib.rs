@@ -1,5 +1,6 @@
-//! **v_vae_core**：`FrameBus` 像素总线 + 异步 Rayon DCT（依赖 `vates_core::Encoder`）。
+//! **v_vae_core**：`FrameBus` 像素总线 + 异步导出（DCT / PNG / JPEG / WebP / ZIP）。
 
+mod export_codec;
 mod frame_bus;
 mod python_binding;
 

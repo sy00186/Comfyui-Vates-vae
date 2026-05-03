@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "v_vae_core"
-version = "0.1.0"
+version = "0.1.1"
 description = "Vates FrameBus + async DCT (PyO3)"
 requires-python = ">=3.9"
 license = { text = "MIT OR Apache-2.0" }

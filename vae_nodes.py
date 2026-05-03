@@ -183,9 +183,11 @@ class VatesVAEWorker:
 
 
 class VatesVAECollector:
-    """触发 ``schedule_save_dct_parallel``；可选阻塞等待磁盘写入。"""
+    """触发 Rust ``frame_bus_schedule_export``（DCT / PNG / JPEG / WebP，可选 ZIP）；可选阻塞等待磁盘写入。"""
 
     OUTPUT_NODE = True
+
+    _FMT_EXT = {"png": "png", "jpg": "jpg", "jpeg": "jpg", "dct": "dct", "webp": "webp"}
 
     @classmethod
     def INPUT_TYPES(cls) -> dict:  # noqa: N802
@@ -194,12 +196,18 @@ class VatesVAECollector:
                 "signal": (VATES_BATCH_SIGNAL,),
                 "save_prefix": ("STRING", {"default": "vates_vae_batch"}),
                 "fps": ("FLOAT", {"default": 24.0, "min": 0.01, "max": 240.0}),
+                "output_format": (
+                    ["png", "jpg", "dct", "webp"],
+                    {"default": "dct"},
+                ),
             },
             "optional": {
                 "header_mode": ("INT", {"default": 0, "min": 0, "max": 255}),
                 "zstd_level": ("INT", {"default": 3, "min": 1, "max": 22}),
                 "workflow_json": ("STRING", {"default": "", "multiline": True}),
                 "wait_for_disk": ("BOOLEAN", {"default": False}),
+                "package_as_zip": ("BOOLEAN", {"default": False}),
+                "quality": ("INT", {"default": 92, "min": 1, "max": 100}),
             },
         }
 
@@ -213,31 +221,48 @@ class VatesVAECollector:
         signal: dict,
         save_prefix: str,
         fps: float,
+        output_format: str = "dct",
         header_mode: int = 0,
         zstd_level: int = 3,
         workflow_json: str = "",
         wait_for_disk: bool = False,
+        package_as_zip: bool = False,
+        quality: int = 92,
     ) -> dict:
         vv = _pick_v_vae_core()
         batch = int(signal["batch"])
         safe = _sanitize_prefix(save_prefix)
         out_dir = folder_paths.get_output_directory()
-        paths = [os.path.join(out_dir, f"{safe}_{i:04d}.dct") for i in range(batch)]
+        fmt = str(output_format).strip().lower()
+        q = max(1, min(100, int(quality)))
+
+        if package_as_zip:
+            paths = [os.path.join(out_dir, f"{safe}.zip")]
+            zip_inner = safe
+        else:
+            ext = self._FMT_EXT.get(fmt, "dct")
+            paths = [os.path.join(out_dir, f"{safe}_{i:04d}.{ext}") for i in range(batch)]
+            zip_inner = ""
 
         wf = workflow_json.strip() or None
-        vv.frame_bus_schedule_save_dct_parallel(
+        vv.frame_bus_schedule_export(
             paths,
+            fmt,
+            bool(package_as_zip),
+            q,
             float(fps),
             int(header_mode) & 0xFF,
             wf,
             int(zstd_level),
             True,
+            zip_inner,
         )
 
         pending = int(vv.get_pending_tasks())
+        out_desc = f"{safe}.zip（内含 {fmt}）" if package_as_zip else f"{safe}_*.{self._FMT_EXT.get(fmt, fmt)}"
         msg = (
-            f"Vates VAE：已提交异步 DCT，batch={batch}，后台任务={pending}。\n"
-            f"输出目录: {out_dir}\n前缀: {safe}_*.dct"
+            f"Vates VAE：已提交异步导出（format={fmt}，zip={package_as_zip}，quality={q}），batch={batch}，后台任务={pending}。\n"
+            f"输出目录: {out_dir}\n文件: {out_desc}"
         )
 
         if wait_for_disk:
